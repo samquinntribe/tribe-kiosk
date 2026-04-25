@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Tribe Sauna + Ice — Check In</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --deep-teal: #325963;
+      --white: #FFFFFF;
+      --error-red: #FF8A8A;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: var(--deep-teal);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .kiosk-container {
+      width: 100%;
+      max-width: 480px;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--white);
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.02em;
+    }
+
+    .subtitle {
+      font-size: 1.05rem;
+      color: var(--white);
+      margin-bottom: 2.5rem;
+      font-weight: 400;
+      opacity: 0.85;
+    }
+
+    input[type="tel"] {
+      width: 100%;
+      padding: 1.15rem 1.25rem;
+      font-size: 1.35rem;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      color: var(--deep-teal);
+      background: var(--white);
+      border: none;
+      border-radius: 16px;
+      outline: none;
+      margin-bottom: 1.25rem;
+      -webkit-appearance: none;
+    }
+
+    input[type="tel"]::placeholder {
+      color: #9DB8BD;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .btn-continue {
+      width: 100%;
+      padding: 1.15rem;
+      font-size: 1.15rem;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 700;
+      color: var(--deep-teal);
+      background: var(--white);
+      border: none;
+      border-radius: 16px;
+      cursor: pointer;
+      transition: transform 0.1s ease;
+      letter-spacing: 0.01em;
+    }
+
+    .btn-continue:active {
+      transform: scale(0.98);
+    }
+
+    .btn-continue:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .status-message {
+      margin-top: 1.25rem;
+      font-size: 0.95rem;
+      min-height: 1.5rem;
+      color: var(--white);
+      opacity: 0.85;
+    }
+
+    .status-message.error {
+      color: var(--error-red);
+      opacity: 1;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      border: 2.5px solid rgba(255,255,255,0.3);
+      border-top-color: var(--white);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 0.4rem;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+
+<div class="kiosk-container">
+
+  <h1>Finnish Sauna + Ice</h1>
+  <p class="subtitle">Enter your mobile number to check in</p>
+
+  <input
+    type="tel"
+    id="phoneInput"
+    placeholder="0412 345 678"
+    maxlength="15"
+    inputmode="numeric"
+    pattern="[0-9]*"
+    autocomplete="off"
+  >
+
+  <button class="btn-continue" id="continueBtn" disabled>Continue</button>
+
+  <p class="status-message" id="statusMsg"></p>
+
+</div>
+
+<script>
+  // ============================================================
+  // CONFIGURATION — UPDATE THESE VALUES
+  // ============================================================
+  const CONFIG = {
+    SUPABASE_URL:  'https://YOUR_PROJECT_ID.supabase.co',
+    SUPABASE_ANON: 'YOUR_ANON_KEY',
+
+    // This page's service area (DO NOT change)
+    SERVICE_AREA: 'sauna_ice',
+
+    // Redirect destinations
+    PAYMENT_URL:    'https://example.com/sauna-ice-payment',
+    TALLY_FORM_URL: 'https://tally.so/r/YOUR_SAUNA_ICE_FORM_ID',
+
+    // Tally URL parameter names (must match your Tally form fields)
+    TALLY_PARAM_PHONE:      'phone',
+    TALLY_PARAM_FIRST_NAME: 'first_name',
+    TALLY_PARAM_LAST_NAME:  'last_name',
+    TALLY_PARAM_EMAIL:      'email',
+  };
+
+
+  // ============================================================
+  // PHONE NUMBER NORMALISATION
+  // Accepts 04xx (local) or 614xx (international without +) or +614xx
+  // Always stores as E.164: +61412345678
+  // ============================================================
+  function normalisePhone(raw) {
+    let digits = raw.replace(/\D/g, '');
+
+    // 61 prefix (11 digits)
+    if (digits.startsWith('61') && digits.length === 11) {
+      return '+' + digits;
+    }
+
+    // 04xx format (10 digits)
+    if (digits.startsWith('0') && digits.length === 10) {
+      return '+61' + digits.substring(1);
+    }
+
+    // 4xx format without leading zero (9 digits)
+    if (digits.startsWith('4') && digits.length === 9) {
+      return '+61' + digits;
+    }
+
+    return null;
+  }
+
+
+  // ============================================================
+  // UI REFERENCES
+  // ============================================================
+  const phoneInput  = document.getElementById('phoneInput');
+  const continueBtn = document.getElementById('continueBtn');
+  const statusMsg   = document.getElementById('statusMsg');
+
+
+  // ============================================================
+  // INPUT HANDLING — digits only, no letters allowed
+  // ============================================================
+  phoneInput.addEventListener('input', () => {
+    phoneInput.value = phoneInput.value.replace(/[^\d]/g, '');
+    continueBtn.disabled = phoneInput.value.length < 9;
+    statusMsg.textContent = '';
+    statusMsg.className = 'status-message';
+  });
+
+  phoneInput.addEventListener('keypress', (e) => {
+    if (!/\d/.test(e.key)) {
+      e.preventDefault();
+    }
+  });
+
+  window.addEventListener('load', () => {
+    phoneInput.focus();
+  });
+
+
+  // ============================================================
+  // MAIN LOOKUP LOGIC
+  // ============================================================
+  continueBtn.addEventListener('click', async () => {
+    const phone = normalisePhone(phoneInput.value);
+
+    if (!phone) {
+      statusMsg.textContent = 'Please enter a valid Australian mobile number';
+      statusMsg.className = 'status-message error';
+      return;
+    }
+
+    continueBtn.disabled = true;
+    statusMsg.innerHTML = '<span class="spinner"></span> Checking your details…';
+    statusMsg.className = 'status-message';
+
+    try {
+      // ---- STEP 1: Look up customer by phone ----
+      const customerRes = await fetch(
+        `${CONFIG.SUPABASE_URL}/rest/v1/kiosk_customers?` +
+        `select=id,first_name,last_name,email` +
+        `&phone=eq.${encodeURIComponent(phone)}`,
+        {
+          headers: {
+            'apikey': CONFIG.SUPABASE_ANON,
+            'Authorization': `Bearer ${CONFIG.SUPABASE_ANON}`,
+          }
+        }
+      );
+
+      if (!customerRes.ok) {
+        throw new Error('Unable to connect. Please try again.');
+      }
+
+      const customers = await customerRes.json();
+
+      // ---- BRAND NEW CUSTOMER → Tally with phone only ----
+      if (customers.length === 0) {
+        const tallyUrl = new URL(CONFIG.TALLY_FORM_URL);
+        tallyUrl.searchParams.set(CONFIG.TALLY_PARAM_PHONE, phone);
+        window.location.href = tallyUrl.toString();
+        return;
+      }
+
+      const customer = customers[0];
+
+      // ---- STEP 2: Check for service-area profile ----
+      const profileRes = await fetch(
+        `${CONFIG.SUPABASE_URL}/rest/v1/kiosk_customer_service_profiles?` +
+        `select=id` +
+        `&customer_id=eq.${customer.id}` +
+        `&service_area_id=eq.${CONFIG.SERVICE_AREA}` +
+        `&waiver_completed=eq.true`,
+        {
+          headers: {
+            'apikey': CONFIG.SUPABASE_ANON,
+            'Authorization': `Bearer ${CONFIG.SUPABASE_ANON}`,
+          }
+        }
+      );
+
+      if (!profileRes.ok) {
+        throw new Error('Unable to connect. Please try again.');
+      }
+
+      const profiles = await profileRes.json();
+
+      // ---- WAIVER DONE → skip to payment ----
+      if (profiles.length > 0) {
+        statusMsg.innerHTML = '<span class="spinner"></span> Welcome back! Redirecting…';
+        window.location.href = CONFIG.PAYMENT_URL;
+        return;
+      }
+
+      // ---- NO PROFILE FOR THIS SERVICE → Tally with pre-fill ----
+      const tallyUrl = new URL(CONFIG.TALLY_FORM_URL);
+      tallyUrl.searchParams.set(CONFIG.TALLY_PARAM_PHONE, phone);
+      if (customer.first_name) tallyUrl.searchParams.set(CONFIG.TALLY_PARAM_FIRST_NAME, customer.first_name);
+      if (customer.last_name)  tallyUrl.searchParams.set(CONFIG.TALLY_PARAM_LAST_NAME, customer.last_name);
+      if (customer.email)      tallyUrl.searchParams.set(CONFIG.TALLY_PARAM_EMAIL, customer.email);
+      window.location.href = tallyUrl.toString();
+
+    } catch (err) {
+      statusMsg.textContent = err.message || 'Something went wrong. Please try again.';
+      statusMsg.className = 'status-message error';
+      continueBtn.disabled = false;
+    }
+  });
+</script>
+
+</body>
+</html>
