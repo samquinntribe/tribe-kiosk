@@ -629,22 +629,37 @@
     setLoading(true);
 
     try {
-      // Look up client by phone, then check they have a kiosk profile
-      const res = await fetch(
-        `${SUPABASE_URL}/rest/v1/kiosk_profiles` +
-        `?select=id,client_id,clients!inner(phone_e164)` +
-        `&clients.phone_e164=eq.${encodeURIComponent(phone)}&limit=1`,
+      // Step 1: find client by phone
+      const clientRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/clients?select=id&phone_e164=eq.${encodeURIComponent(phone)}&limit=1`,
         { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` } }
       );
-      if (!res.ok) throw new Error('lookup failed');
-      const profiles = await res.json();
+      if (!clientRes.ok) throw new Error('client lookup failed');
+      const clients = await clientRes.json();
+
+      if (clients.length === 0) {
+        // No client record at all — send to waiver
+        window.location.href = TALLY_FORM_URL;
+        return;
+      }
+
+      // Step 2: check if that client has a kiosk profile
+      const profileRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/kiosk_profiles?select=id&client_id=eq.${clients[0].id}&limit=1`,
+        { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` } }
+      );
+      if (!profileRes.ok) throw new Error('profile lookup failed');
+      const profiles = await profileRes.json();
 
       if (profiles.length > 0) {
+        // Returning customer — kiosk profile on file
         showSuccess();
         setTimeout(() => { window.location.href = THANK_YOU_URL; }, 1800);
       } else {
+        // Client exists but no kiosk profile — send to waiver
         window.location.href = TALLY_FORM_URL;
       }
+
     } catch (err) {
       console.error(err);
       setLoading(false);
