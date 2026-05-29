@@ -1,328 +1,682 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Tribe Sauna + Ice — Check In</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --deep-teal: #325963;
-      --white: #FFFFFF;
-      --error-red: #FF8A8A;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=768">
+<title>Tribe Sauna + Ice — Check In</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:ital,wght@0,300;0,400;0,500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-    }
+  :root {
+    --deep-teal: #325963;
+    --sage-teal: #95C4BF;
+    --soft-mint: #D9E9E1;
+    --white: #ffffff;
+    --off-white: #f7fbf9;
+  }
 
-    html, body {
-      height: 100%;
-      overflow: hidden;
-    }
+  html, body {
+    width: 768px;
+    height: 1024px;
+    overflow: hidden;
+    font-family: 'DM Sans', sans-serif;
+    background: var(--deep-teal);
+    color: var(--white);
+  }
 
-    body {
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      background: var(--deep-teal);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 2rem;
-    }
+  /* ── Page: vertical stack ── */
+  .page {
+    width: 768px;
+    height: 1024px;
+    display: grid;
+    grid-template-rows: auto 1fr;
+    position: relative;
+    overflow: hidden;
+  }
 
-    .kiosk-container {
-      width: 100%;
-      max-width: 480px;
-      text-align: center;
-    }
+  /* ── Top panel (brand + headline) ── */
+  .top {
+    background: var(--deep-teal);
+    padding: 52px 56px 44px;
+    position: relative;
+    z-index: 2;
+  }
 
-    h1 {
-      font-size: 2.1rem;
-      font-weight: 700;
-      color: var(--white);
-      margin-bottom: 0.5rem;
-      letter-spacing: -0.02em;
-    }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 36px;
+  }
 
-    .subtitle {
-      font-size: 1.26rem;
-      color: var(--white);
-      margin-bottom: 2.5rem;
-      font-weight: 400;
-      opacity: 0.85;
-    }
+  .brand-icon { width: 28px; height: 28px; }
 
-    input[type="tel"] {
-      width: 100%;
-      padding: 1.15rem 1.25rem;
-      font-size: 1.35rem;
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      font-weight: 600;
-      letter-spacing: 0.06em;
-      color: var(--deep-teal);
-      background: var(--white);
-      border: none;
-      border-radius: 16px;
-      outline: none;
-      margin-bottom: 1.25rem;
-      -webkit-appearance: none;
-    }
+  .brand-name {
+    font-weight: 300;
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--sage-teal);
+  }
 
-    input[type="tel"]::placeholder {
-      color: #9DB8BD;
-      font-weight: 400;
-      letter-spacing: 0.02em;
-    }
+  .eyebrow {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--sage-teal);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
 
-    .btn-continue {
-      width: 100%;
-      padding: 1.15rem;
-      font-size: 1.15rem;
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      font-weight: 700;
-      color: var(--deep-teal);
-      background: var(--white);
-      border: none;
-      border-radius: 16px;
-      cursor: pointer;
-      transition: transform 0.1s ease;
-      letter-spacing: 0.01em;
-    }
+  .eyebrow::before {
+    content: '';
+    display: block;
+    width: 24px;
+    height: 1px;
+    background: var(--sage-teal);
+    opacity: 0.6;
+  }
 
-    .btn-continue:active {
-      transform: scale(0.98);
-    }
+  .headline {
+    font-family: 'DM Serif Display', serif;
+    font-size: 52px;
+    line-height: 1.06;
+    color: var(--white);
+    margin-bottom: 16px;
+    letter-spacing: -0.5px;
+  }
 
-    .btn-continue:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
+  .headline em {
+    font-style: normal;
+    color: var(--sage-teal);
+  }
 
-    .status-message {
-      margin-top: 1.25rem;
-      font-size: 0.95rem;
-      min-height: 1.5rem;
-      color: var(--white);
-      opacity: 0.85;
-    }
+  .subline {
+    font-size: 14px;
+    font-weight: 300;
+    color: rgba(255,255,255,0.5);
+    line-height: 1.6;
+  }
 
-    .status-message.error {
-      color: var(--error-red);
-      opacity: 1;
-    }
+  .temp-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 24px;
+  }
 
-    .spinner {
-      display: inline-block;
-      width: 18px;
-      height: 18px;
-      border: 2.5px solid rgba(255,255,255,0.3);
-      border-top-color: var(--white);
-      border-radius: 50%;
-      animation: spin 0.7s linear infinite;
-      vertical-align: middle;
-      margin-right: 0.4rem;
-    }
+  .temp-badge {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    background: rgba(149,196,191,0.1);
+    border: 1px solid rgba(149,196,191,0.2);
+    border-radius: 100px;
+    padding: 6px 14px;
+  }
 
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-  </style>
+  .temp-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--sage-teal);
+    flex-shrink: 0;
+  }
+
+  .temp-label {
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--sage-teal);
+    letter-spacing: 0.04em;
+  }
+
+  /* Decorative rings bottom-left of top panel */
+  .ring {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    border: 1px solid rgba(149,196,191,0.1);
+  }
+  .ring-1 { width: 260px; height: 260px; bottom: -100px; right: -60px; }
+  .ring-2 { width: 160px; height: 160px; bottom: -60px; right: -20px; border-color: rgba(149,196,191,0.16); }
+  .ring-3 { width: 80px;  height: 80px;  bottom: -20px; right: 20px;  border-color: rgba(149,196,191,0.22); }
+
+  /* ── Bottom panel (form) ── */
+  .bottom {
+    background: var(--off-white);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 56px 48px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .bottom::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 80% 10%, rgba(149,196,191,0.13) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  .form-container {
+    width: 100%;
+    max-width: 460px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── Labels ── */
+  .input-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--deep-teal);
+    opacity: 0.45;
+    margin-bottom: 8px;
+  }
+
+  .input-group {
+    margin-bottom: 12px;
+  }
+
+  /* ── Country dropdown ── */
+  .country-select-wrapper {
+    position: relative;
+    display: block;
+  }
+
+  .country-select {
+    width: 100%;
+    appearance: none;
+    -webkit-appearance: none;
+    background: white;
+    border: 1.5px solid rgba(50,89,99,0.14);
+    border-radius: 12px;
+    padding: 13px 44px 13px 16px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 400;
+    color: var(--deep-teal);
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s;
+    -webkit-tap-highlight-color: transparent;
+    line-height: 1.4;
+  }
+
+  .country-select:focus { border-color: var(--sage-teal); }
+
+  .country-arrow {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: rgba(50,89,99,0.35);
+    display: flex;
+    align-items: center;
+  }
+
+  /* ── Phone input ── */
+  .phone-input {
+    display: block;
+    width: 100%;
+    background: white;
+    border: 1.5px solid rgba(50,89,99,0.14);
+    border-radius: 12px;
+    padding: 16px 20px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 26px;
+    font-weight: 400;
+    color: var(--deep-teal);
+    outline: none;
+    letter-spacing: 0.05em;
+    transition: border-color 0.2s;
+    -webkit-tap-highlight-color: transparent;
+    text-align: center;
+  }
+
+  .phone-input::placeholder { color: rgba(50,89,99,0.2); }
+  .phone-input:focus        { border-color: var(--sage-teal); }
+
+  /* ── Keypad ── */
+  .keypad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 12px;
+    margin-bottom: 12px;
+  }
+
+  .key {
+    background: white;
+    border: 1.5px solid rgba(50,89,99,0.1);
+    border-radius: 12px;
+    padding: 16px 0;
+    text-align: center;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 22px;
+    font-weight: 400;
+    color: var(--deep-teal);
+    cursor: pointer;
+    transition: background 0.12s, border-color 0.12s, transform 0.1s;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    line-height: 1;
+  }
+
+  .key-sub {
+    display: block;
+    font-size: 8px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(50,89,99,0.3);
+    margin-top: 3px;
+  }
+
+  .key:active {
+    background: var(--soft-mint);
+    border-color: var(--sage-teal);
+    transform: scale(0.95);
+  }
+
+  .key.back {
+    background: transparent;
+    border-color: rgba(50,89,99,0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .key.back:active { background: #fce8e8; border-color: #f0aaaa; }
+
+  /* ── Submit button ── */
+  .submit-btn {
+    width: 100%;
+    background: var(--deep-teal);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 17px 24px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.12s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .submit-btn:active { transform: scale(0.985); background: #253f47; }
+  .submit-btn:disabled { opacity: 0.7; cursor: default; }
+
+  .privacy-note {
+    text-align: center;
+    font-size: 11px;
+    color: rgba(50,89,99,0.32);
+    margin-top: 14px;
+    font-weight: 300;
+  }
+
+  /* ── Success state ── */
+  .success-state {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 14px;
+  }
+
+  .success-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--soft-mint);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 4px;
+  }
+
+  .success-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 28px;
+    color: var(--deep-teal);
+  }
+
+  .success-sub {
+    font-size: 14px;
+    color: rgba(50,89,99,0.5);
+    font-weight: 300;
+    line-height: 1.6;
+    max-width: 280px;
+  }
+
+  .session-info {
+    background: white;
+    border: 1.5px solid rgba(50,89,99,0.1);
+    border-radius: 14px;
+    padding: 14px 22px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .session-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--sage-teal);
+    flex-shrink: 0;
+  }
+
+  .session-text {
+    font-size: 14px;
+    color: var(--deep-teal);
+  }
+
+  .session-text span { font-weight: 500; }
+</style>
 </head>
 <body>
 
-<div class="kiosk-container">
+<div class="page">
 
-  <h1>Finnish Sauna + Ice</h1>
-  <p class="subtitle">Enter your mobile number to check in</p>
+  <!-- Top panel -->
+  <div class="top">
+    <div class="ring ring-1"></div>
+    <div class="ring ring-2"></div>
+    <div class="ring ring-3"></div>
 
-  <input
-    type="tel"
-    id="phoneInput"
-    placeholder="0412 345 678"
-    maxlength="15"
-    inputmode="numeric"
-    pattern="[0-9]*"
-    autocomplete="off"
-  >
+    <div class="brand">
+      <svg class="brand-icon" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="16" cy="16" r="15" stroke="#95C4BF" stroke-width="1"/>
+        <path d="M16 6C16 6 10 11 10 17C10 20.314 12.686 23 16 23C19.314 23 22 20.314 22 17C22 11 16 6 16 6Z" fill="rgba(149,196,191,0.2)" stroke="#95C4BF" stroke-width="1" stroke-linejoin="round"/>
+        <path d="M16 12C16 12 13 15 13 17.5C13 19.433 14.343 21 16 21C17.657 21 19 19.433 19 17.5C19 15 16 12 16 12Z" fill="rgba(149,196,191,0.45)" stroke="#95C4BF" stroke-width="0.75" stroke-linejoin="round"/>
+      </svg>
+      <span class="brand-name">Tribe Sauna + Ice</span>
+    </div>
 
-  <button class="btn-continue" id="continueBtn" disabled>Continue</button>
+    <div class="eyebrow">Check in</div>
+    <h1 class="headline">Welcome<br><em>back.</em></h1>
+    <p class="subline">Enter your mobile number to check in to your session.</p>
 
-  <p class="status-message" id="statusMsg"></p>
+    <div class="temp-row">
+      <div class="temp-badge">
+        <div class="temp-dot"></div>
+        <span class="temp-label">Sauna · 85°C</span>
+      </div>
+      <div class="temp-badge">
+        <div class="temp-dot" style="background:#acd8f0;"></div>
+        <span class="temp-label" style="color:#acd8f0;">Ice · 4°C</span>
+      </div>
+    </div>
+  </div>
 
+  <!-- Bottom panel -->
+  <div class="bottom">
+
+    <!-- Form view -->
+    <div class="form-container" id="formView">
+
+      <div class="input-group">
+        <label class="input-label">Country</label>
+        <div class="country-select-wrapper">
+          <select class="country-select" id="countrySelect">
+            <option value="61">🇦🇺 Australia (+61)</option>
+            <option value="64">🇳🇿 New Zealand (+64)</option>
+            <option value="44">🇬🇧 United Kingdom (+44)</option>
+            <option value="1" >🇺🇸 United States (+1)</option>
+          </select>
+          <span class="country-arrow">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </span>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">Mobile number</label>
+        <input
+          type="tel"
+          class="phone-input"
+          id="phoneInput"
+          placeholder="04__ ___ ___"
+          autocomplete="off"
+          readonly
+        >
+      </div>
+
+      <div class="keypad" id="keypad">
+        <button class="key" data-val="1">1<span class="key-sub">&nbsp;</span></button>
+        <button class="key" data-val="2">2<span class="key-sub">ABC</span></button>
+        <button class="key" data-val="3">3<span class="key-sub">DEF</span></button>
+        <button class="key" data-val="4">4<span class="key-sub">GHI</span></button>
+        <button class="key" data-val="5">5<span class="key-sub">JKL</span></button>
+        <button class="key" data-val="6">6<span class="key-sub">MNO</span></button>
+        <button class="key" data-val="7">7<span class="key-sub">PQRS</span></button>
+        <button class="key" data-val="8">8<span class="key-sub">TUV</span></button>
+        <button class="key" data-val="9">9<span class="key-sub">WXYZ</span></button>
+        <button class="key" data-val="" style="opacity:0;pointer-events:none;"></button>
+        <button class="key" data-val="0">0<span class="key-sub">+</span></button>
+        <button class="key back" id="backBtn" aria-label="Delete">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#325963" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12H9m0 0l4-4m-4 4l4 4"/><path d="M3 12h2"/>
+          </svg>
+        </button>
+      </div>
+
+      <button class="submit-btn" id="submitBtn">
+        Check in
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </button>
+
+      <p class="privacy-note">Your number is only used to locate your booking</p>
+    </div>
+
+    <!-- Success view -->
+    <div class="form-container success-state" id="successView">
+      <div class="success-icon">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#325963" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <h2 class="success-title">You're checked in</h2>
+      <p class="success-sub">Welcome back. Head through when you're ready.</p>
+      <div class="session-info">
+        <div class="session-dot"></div>
+        <div class="session-text">Session at <span id="sessionTime">10:00 AM</span> · Sauna + Ice</div>
+      </div>
+      <button class="submit-btn" id="doneBtn" style="margin-top:8px;background:var(--soft-mint);color:var(--deep-teal);">
+        Done
+      </button>
+    </div>
+
+  </div>
 </div>
 
 <script>
-  // ============================================================
-  // CONFIGURATION — UPDATE THESE VALUES
-  // ============================================================
-  const CONFIG = {
-    SUPABASE_URL:  'https://qcxwyhszeynjkxfedxhm.supabase.co',
-    SUPABASE_ANON: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFjeHd5aHN6ZXluamt4ZmVkeGhtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyODYxNTMsImV4cCI6MjA5MDg2MjE1M30.ZbbficLCCdOzjcCRBJz9IsBUooEuGouD4iGO8CEuUU8',
+  // ─── CONFIG ──────────────────────────────────────────────────────────────────
+  const SUPABASE_URL      = 'YOUR_SUPABASE_URL';
+  const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+  const SERVICE_AREA      = 'sauna_ice';          // change to 'infrared' for the other iPad
+  const TALLY_FORM_URL    = 'YOUR_TALLY_FORM_URL';
+  const THANK_YOU_URL     = 'YOUR_THANK_YOU_URL';
+  // ─────────────────────────────────────────────────────────────────────────────
 
-    // This page's service area (DO NOT change)
-    SERVICE_AREA: 'sauna_ice',
-
-    // Redirect destinations
-    PAYMENT_URL:    'https://example.com/sauna-ice-payment',
-    TALLY_FORM_URL: 'https://forms.tribesaunaice.com.au/waiver',
-
-    // Tally URL parameter names (must match your Tally form fields)
-    TALLY_PARAM_PHONE:      'phone',
-    TALLY_PARAM_FIRST_NAME: 'first_name',
-    TALLY_PARAM_LAST_NAME:  'last_name',
-    TALLY_PARAM_EMAIL:      'email',
+  const COUNTRIES = {
+    '61': {
+      max: 10,
+      placeholder: '04__ ___ ___',
+      format: d => {
+        if (d.length <= 4) return d;
+        if (d.length <= 7) return d.slice(0,4) + ' ' + d.slice(4);
+        return d.slice(0,4) + ' ' + d.slice(4,7) + ' ' + d.slice(7);
+      },
+      toE164: d => {
+        if (d.startsWith('04') && d.length === 10) return '+61' + d.slice(1);
+        if (d.startsWith('4')  && d.length === 9)  return '+61' + d;
+        return '+61' + d;
+      }
+    },
+    '64': {
+      max: 9,
+      placeholder: '02_ ___ ____',
+      format: d => {
+        if (d.length <= 3) return d;
+        if (d.length <= 6) return d.slice(0,3) + ' ' + d.slice(3);
+        return d.slice(0,3) + ' ' + d.slice(3,6) + ' ' + d.slice(6);
+      },
+      toE164: d => d.startsWith('0') ? '+64' + d.slice(1) : '+64' + d
+    },
+    '44': {
+      max: 10,
+      placeholder: '07___ ______',
+      format: d => d.length <= 5 ? d : d.slice(0,5) + ' ' + d.slice(5),
+      toE164: d => d.startsWith('0') && d.length === 10 ? '+44' + d.slice(1) : '+44' + d
+    },
+    '1': {
+      max: 10,
+      placeholder: '(___) ___-____',
+      format: d => {
+        if (!d.length) return '';
+        if (d.length <= 3) return '(' + d;
+        if (d.length <= 6) return '(' + d.slice(0,3) + ') ' + d.slice(3);
+        return '(' + d.slice(0,3) + ') ' + d.slice(3,6) + '-' + d.slice(6);
+      },
+      toE164: d => '+1' + d
+    }
   };
 
+  let digits = '';
+  let countryCode = '61';
 
-  // ============================================================
-  // PHONE NUMBER NORMALISATION
-  // Accepts 04xx (local) or 614xx (international without +) or +614xx
-  // Always stores as E.164: +61412345678
-  // ============================================================
-  function normalisePhone(raw) {
-    let digits = raw.replace(/\D/g, '');
+  const input       = document.getElementById('phoneInput');
+  const formView    = document.getElementById('formView');
+  const successView = document.getElementById('successView');
+  const sessionTime = document.getElementById('sessionTime');
+  const submitBtn   = document.getElementById('submitBtn');
 
-    // 61 prefix (11 digits)
-    if (digits.startsWith('61') && digits.length === 11) {
-      return '+' + digits;
-    }
+  document.getElementById('countrySelect').addEventListener('change', function() {
+    countryCode = this.value;
+    digits = '';
+    updateDisplay();
+  });
 
-    // 04xx format (10 digits)
-    if (digits.startsWith('0') && digits.length === 10) {
-      return '+61' + digits.substring(1);
-    }
-
-    // 4xx format without leading zero (9 digits)
-    if (digits.startsWith('4') && digits.length === 9) {
-      return '+61' + digits;
-    }
-
-    return null;
+  function updateDisplay() {
+    const c = COUNTRIES[countryCode];
+    input.placeholder = c.placeholder;
+    input.value = digits.length ? c.format(digits) : '';
   }
 
-
-  // ============================================================
-  // UI REFERENCES
-  // ============================================================
-  const phoneInput  = document.getElementById('phoneInput');
-  const continueBtn = document.getElementById('continueBtn');
-  const statusMsg   = document.getElementById('statusMsg');
-
-
-  // ============================================================
-  // INPUT HANDLING — digits only, no letters allowed
-  // ============================================================
-  phoneInput.addEventListener('input', () => {
-    phoneInput.value = phoneInput.value.replace(/[^\d]/g, '');
-    continueBtn.disabled = phoneInput.value.length < 9;
-    statusMsg.textContent = '';
-    statusMsg.className = 'status-message';
-  });
-
-  phoneInput.addEventListener('keypress', (e) => {
-    if (!/\d/.test(e.key)) {
-      e.preventDefault();
+  document.getElementById('keypad').addEventListener('click', function(e) {
+    const key = e.target.closest('.key');
+    if (!key || key.id === 'backBtn') return;
+    const val = key.dataset.val;
+    if (val !== undefined && digits.length < COUNTRIES[countryCode].max) {
+      digits += val;
+      updateDisplay();
+      pulseInput();
     }
   });
 
-  window.addEventListener('load', () => {
-    phoneInput.focus();
+  document.getElementById('backBtn').addEventListener('click', function() {
+    if (digits.length > 0) { digits = digits.slice(0,-1); updateDisplay(); }
   });
 
+  function pulseInput() {
+    input.style.transition = 'transform 0.08s';
+    input.style.transform = 'scale(1.012)';
+    setTimeout(() => { input.style.transform = 'scale(1)'; }, 80);
+  }
 
-  // ============================================================
-  // MAIN LOOKUP LOGIC
-  // ============================================================
-  continueBtn.addEventListener('click', async () => {
-    const phone = normalisePhone(phoneInput.value);
+  function shakeInput() {
+    input.style.borderColor = '#e24b4a';
+    let n = 0;
+    const t = setInterval(() => {
+      input.style.transform = n % 2 === 0 ? 'translateX(6px)' : 'translateX(-6px)';
+      if (++n > 5) {
+        clearInterval(t);
+        input.style.transform = 'translateX(0)';
+        setTimeout(() => { input.style.borderColor = ''; }, 400);
+      }
+    }, 60);
+  }
 
-    if (!phone) {
-      statusMsg.textContent = 'Please enter a valid Australian mobile number';
-      statusMsg.className = 'status-message error';
-      return;
-    }
+  function setLoading(on) {
+    submitBtn.disabled = on;
+    submitBtn.innerHTML = on
+      ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><circle cx="12" cy="12" r="10" stroke-dasharray="31.4" stroke-dashoffset="10"><animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="0.8s" repeatCount="indefinite"/></circle></svg>'
+      : 'Check in <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
+  }
 
-    continueBtn.disabled = true;
-    statusMsg.innerHTML = '<span class="spinner"></span> Checking your details…';
-    statusMsg.className = 'status-message';
+  submitBtn.addEventListener('click', async function() {
+    const minDigits = countryCode === '64' ? 7 : 8;
+    if (digits.length < minDigits) { shakeInput(); return; }
+
+    const phone = COUNTRIES[countryCode].toE164(digits);
+    setLoading(true);
 
     try {
-      // ---- STEP 1: Look up customer by phone ----
-      const customerRes = await fetch(
-        `${CONFIG.SUPABASE_URL}/rest/v1/kiosk_customers?` +
-        `select=id,first_name,last_name,email` +
-        `&phone=eq.${encodeURIComponent(phone)}`,
-        {
-          headers: {
-            'apikey': CONFIG.SUPABASE_ANON,
-            'Authorization': `Bearer ${CONFIG.SUPABASE_ANON}`,
-          }
-        }
+      const res = await fetch(
+        `${SUPABASE_URL}/rest/v1/kiosk_customer_service_profiles` +
+        `?select=id&phone=eq.${encodeURIComponent(phone)}&service_area=eq.${SERVICE_AREA}&waiver_completed=eq.true&limit=1`,
+        { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` } }
       );
+      if (!res.ok) throw new Error('lookup failed');
+      const profiles = await res.json();
 
-      if (!customerRes.ok) {
-        throw new Error('Unable to connect. Please try again.');
-      }
-
-      const customers = await customerRes.json();
-
-      // ---- BRAND NEW CUSTOMER → Tally with phone only ----
-      if (customers.length === 0) {
-        const tallyUrl = new URL(CONFIG.TALLY_FORM_URL);
-        tallyUrl.searchParams.set(CONFIG.TALLY_PARAM_PHONE, phone);
-        window.location.href = tallyUrl.toString();
-        return;
-      }
-
-      const customer = customers[0];
-
-      // ---- STEP 2: Check for service-area profile ----
-      const profileRes = await fetch(
-        `${CONFIG.SUPABASE_URL}/rest/v1/kiosk_customer_service_profiles?` +
-        `select=id` +
-        `&customer_id=eq.${customer.id}` +
-        `&service_area_id=eq.${CONFIG.SERVICE_AREA}` +
-        `&waiver_completed=eq.true`,
-        {
-          headers: {
-            'apikey': CONFIG.SUPABASE_ANON,
-            'Authorization': `Bearer ${CONFIG.SUPABASE_ANON}`,
-          }
-        }
-      );
-
-      if (!profileRes.ok) {
-        throw new Error('Unable to connect. Please try again.');
-      }
-
-      const profiles = await profileRes.json();
-
-      // ---- WAIVER DONE → skip to payment ----
       if (profiles.length > 0) {
-        statusMsg.innerHTML = '<span class="spinner"></span> Welcome back! Redirecting…';
-        window.location.href = CONFIG.PAYMENT_URL;
-        return;
+        showSuccess();
+        setTimeout(() => { window.location.href = THANK_YOU_URL; }, 1800);
+      } else {
+        window.location.href = TALLY_FORM_URL;
       }
-
-      // ---- NO PROFILE FOR THIS SERVICE → Tally with pre-fill ----
-      const tallyUrl = new URL(CONFIG.TALLY_FORM_URL);
-      tallyUrl.searchParams.set(CONFIG.TALLY_PARAM_PHONE, phone);
-      if (customer.first_name) tallyUrl.searchParams.set(CONFIG.TALLY_PARAM_FIRST_NAME, customer.first_name);
-      if (customer.last_name)  tallyUrl.searchParams.set(CONFIG.TALLY_PARAM_LAST_NAME, customer.last_name);
-      if (customer.email)      tallyUrl.searchParams.set(CONFIG.TALLY_PARAM_EMAIL, customer.email);
-      window.location.href = tallyUrl.toString();
-
     } catch (err) {
-      statusMsg.textContent = err.message || 'Something went wrong. Please try again.';
-      statusMsg.className = 'status-message error';
-      continueBtn.disabled = false;
+      console.error(err);
+      setLoading(false);
+      shakeInput();
     }
   });
-</script>
 
+  function showSuccess() {
+    const now = new Date();
+    let h = now.getHours(), m = now.getMinutes();
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12 || 12;
+    sessionTime.textContent = h + ':' + (m < 10 ? '0' + m : m) + ' ' + ampm;
+    formView.style.display = 'none';
+    successView.style.display = 'flex';
+    successView.style.opacity = '0';
+    successView.style.transform = 'translateY(12px)';
+    setTimeout(() => {
+      successView.style.transition = 'opacity 0.35s, transform 0.35s';
+      successView.style.opacity = '1';
+      successView.style.transform = 'translateY(0)';
+    }, 20);
+  }
+
+  document.getElementById('doneBtn').addEventListener('click', function() {
+    digits = '';
+    updateDisplay();
+    setLoading(false);
+    successView.style.display = 'none';
+    formView.style.display = 'block';
+    formView.style.opacity = '0';
+    setTimeout(() => { formView.style.transition = 'opacity 0.3s'; formView.style.opacity = '1'; }, 20);
+  });
+</script>
 </body>
 </html>
