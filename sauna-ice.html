@@ -748,27 +748,35 @@
   const THANK_YOU_URL     = 'https://samquinntribe.github.io/tribe-kiosk/tribe-thankyou.html';
   // ─────────────────────────────────────────────────────────────────────────────
 
-  // ─── Universal phone handling ────────────────────────────────────────────────
-  // Lenient: accepts 6–15 digits for any country (matches E.164 spec max length).
-  // E.164 conversion = +{dialCode}{digits with leading 0 stripped if present}.
-  // This works for AU, NZ, UK, ZA, and most of Europe which all use trunk 0.
-  // For countries without trunk 0 (US, China, etc.) the 0 strip is a no-op.
+  // ─── Phone handling ──────────────────────────────────────────────────────────
+  // AU (+61): strict 10 digits, format 04XX XXX XXX, placeholder 04__ ___ ___
+  // All other countries: lenient 6–15 digits, generic 3-3-3-3 grouping
 
-  const MIN_DIGITS = 6;
-  const MAX_DIGITS = 15;
+  const LENIENT_MIN = 6;
+  const LENIENT_MAX = 15;
+  const AU_LEN = 10;
 
   function formatPhone(d) {
-    // Generic readable formatting: groups of 3-4 digits
-    if (d.length <= 3) return d;
-    if (d.length <= 6) return d.slice(0,3) + ' ' + d.slice(3);
-    if (d.length <= 9) return d.slice(0,3) + ' ' + d.slice(3,6) + ' ' + d.slice(6);
-    return d.slice(0,3) + ' ' + d.slice(3,6) + ' ' + d.slice(6,9) + ' ' + d.slice(9);
+    if (countryCode === '61') {
+      // AU: 04XX XXX XXX
+      if (d.length <= 4) return d;
+      if (d.length <= 7) return d.slice(0,4) + ' ' + d.slice(4);
+      return d.slice(0,4) + ' ' + d.slice(4,7) + ' ' + d.slice(7);
+    }
+    // All other countries: plain digits, no grouping
+    return d;
   }
 
   function toE164(dialCode, d) {
-    // Strip a single leading 0 (trunk prefix used in many countries)
     const stripped = d.startsWith('0') ? d.slice(1) : d;
     return '+' + dialCode + stripped;
+  }
+
+  function getMin() { return countryCode === '61' ? AU_LEN : LENIENT_MIN; }
+  function getMax() { return countryCode === '61' ? AU_LEN : LENIENT_MAX; }
+
+  function getPlaceholder() {
+    return countryCode === '61' ? '04__ ___ ___' : 'Enter mobile number';
   }
 
   let digits = '';
@@ -787,7 +795,7 @@
   });
 
   function updateDisplay() {
-    input.placeholder = 'Enter mobile number';
+    input.placeholder = getPlaceholder();
     input.value = digits.length ? formatPhone(digits) : '';
   }
 
@@ -795,7 +803,7 @@
     const key = e.target.closest('.key');
     if (!key || key.id === 'backBtn') return;
     const val = key.dataset.val;
-    if (val !== undefined && digits.length < MAX_DIGITS) {
+    if (val !== undefined && digits.length < getMax()) {
       digits += val;
       updateDisplay();
       pulseInput();
@@ -833,7 +841,7 @@
   }
 
   submitBtn.addEventListener('click', async function() {
-    if (digits.length < MIN_DIGITS) { shakeInput(); return; }
+    if (digits.length < getMin()) { shakeInput(); return; }
 
     const phone = toE164(countryCode, digits);
     setLoading(true);
