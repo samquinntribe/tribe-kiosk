@@ -743,7 +743,7 @@
 <script>
   // ─── CONFIG ──────────────────────────────────────────────────────────────────
   const SUPABASE_URL      = 'https://hurctwfeueytlkpdrrpm.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1cmN0d2ZldWV5dGxrcGRycnBtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1MjkzMjksImV4cCI6MjA5MzEwNTMyOX0.3sEwa9oeB-k1OQtrEu-_MMpUxvd5sCvmFOzBP_Xp52E';
+  const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
   const TALLY_FORM_URL    = 'https://forms.tribesaunaice.com.au/waiver';
   const THANK_YOU_URL     = 'https://samquinntribe.github.io/tribe-kiosk/tribe-thankyou.html';
   // ─────────────────────────────────────────────────────────────────────────────
@@ -886,8 +886,10 @@
         setTimeout(() => { window.location.href = THANK_YOU_URL; }, 1800);
 
       } else {
-        // ── New customer ── no profile yet, send to Tally (Zapier RPC creates everything)
-        window.location.href = TALLY_FORM_URL;
+        // ── New customer ── no profile yet, send to Tally
+        // Show feedback so the redirect doesn't feel frozen while Tally loads
+        showRedirecting();
+        setTimeout(() => { window.location.href = TALLY_FORM_URL; }, 400);
       }
 
     } catch (err) {
@@ -896,6 +898,26 @@
       shakeInput();
     }
   });
+
+  function showRedirecting() {
+    const titleEl = document.getElementById('successTitle');
+    titleEl.textContent = "One moment…";
+    const subEl = document.querySelector('.success-sub');
+    if (subEl) subEl.textContent = "Opening waiver…";
+    const sessionInfo = document.querySelector('.session-info');
+    if (sessionInfo) sessionInfo.style.display = 'none';
+    const doneBtn = document.getElementById('doneBtn');
+    if (doneBtn) doneBtn.style.display = 'none';
+    formView.style.display = 'none';
+    successView.style.display = 'flex';
+    successView.style.opacity = '0';
+    successView.style.transform = 'translateY(12px)';
+    setTimeout(() => {
+      successView.style.transition = 'opacity 0.35s, transform 0.35s';
+      successView.style.opacity = '1';
+      successView.style.transform = 'translateY(0)';
+    }, 20);
+  }
 
   function showSuccess(firstName) {
     const now = new Date();
