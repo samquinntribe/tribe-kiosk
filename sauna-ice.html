@@ -511,7 +511,6 @@
   // ─── CONFIG ──────────────────────────────────────────────────────────────────
   const SUPABASE_URL      = 'YOUR_SUPABASE_URL';
   const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
-  const SERVICE_AREA      = 'sauna_ice';          // change to 'infrared' for the other iPad
   const TALLY_FORM_URL    = 'YOUR_TALLY_FORM_URL';
   const THANK_YOU_URL     = 'YOUR_THANK_YOU_URL';
   // ─────────────────────────────────────────────────────────────────────────────
@@ -630,9 +629,11 @@
     setLoading(true);
 
     try {
+      // Look up client by phone, then check they have a kiosk profile
       const res = await fetch(
-        `${SUPABASE_URL}/rest/v1/kiosk_customer_service_profiles` +
-        `?select=id&phone=eq.${encodeURIComponent(phone)}&service_area=eq.${SERVICE_AREA}&waiver_completed=eq.true&limit=1`,
+        `${SUPABASE_URL}/rest/v1/kiosk_profiles` +
+        `?select=id,client_id,clients!inner(phone_e164)` +
+        `&clients.phone_e164=eq.${encodeURIComponent(phone)}&limit=1`,
         { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` } }
       );
       if (!res.ok) throw new Error('lookup failed');
