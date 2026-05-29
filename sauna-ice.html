@@ -688,7 +688,7 @@
           type="tel"
           class="phone-input"
           id="phoneInput"
-          placeholder="Enter mobile number"
+          placeholder="04__ ___ ___"
           autocomplete="off"
           readonly
         >
@@ -726,7 +726,7 @@
       <div class="success-icon">
         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#325963" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
       </div>
-      <h2 class="success-title">You're checked in</h2>
+      <h2 class="success-title" id="successTitle">You're checked in</h2>
       <p class="success-sub">Welcome back. Head through when you're ready.</p>
       <div class="session-info">
         <div class="session-dot"></div>
@@ -847,20 +847,46 @@
     setLoading(true);
 
     try {
-      // Single lookup: does this phone have a kiosk profile on file?
-      const res = await fetch(
-        `${SUPABASE_URL}/rest/v1/kiosk_profiles?select=id&phone_e164=eq.${encodeURIComponent(phone)}&limit=1`,
+      // First, look up if this phone has an existing profile + get the name
+      const lookupRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/kiosk_profiles?select=id,first_name,last_name&phone_e164=eq.${encodeURIComponent(phone)}&limit=1`,
         { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` } }
       );
-      if (!res.ok) throw new Error('lookup failed');
-      const profiles = await res.json();
+      if (!lookupRes.ok) throw new Error('lookup failed');
+      const profiles = await lookupRes.json();
 
       if (profiles.length > 0) {
-        // Returning kiosk user — waiver already on file
-        showSuccess();
+        // ── Returning customer ── call checkin RPC to log visit + bump count
+        const profile = profiles[0];
+        const firstName = profile.first_name || '';
+
+        // Save name to localStorage so thank-you page can personalise greeting
+        try {
+          localStorage.setItem('tribe_checkin_name', firstName);
+          localStorage.setItem('tribe_checkin_at', Date.now().toString());
+        } catch (e) { /* ignore */ }
+
+        // Call checkin RPC — handles visit insertion + visit_count bump atomically
+        fetch(`${SUPABASE_URL}/rest/v1/rpc/checkin`, {
+          method: 'POST',
+          headers: {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=minimal'
+          },
+          body: JSON.stringify({
+            p_phone: phone,
+            p_first_name: profile.first_name,
+            p_last_name: profile.last_name
+          })
+        }).catch(err => console.error('Check-in RPC failed:', err));
+
+        showSuccess(firstName);
         setTimeout(() => { window.location.href = THANK_YOU_URL; }, 1800);
+
       } else {
-        // No kiosk profile — send to waiver
+        // ── New customer ── no profile yet, send to Tally (Zapier RPC creates everything)
         window.location.href = TALLY_FORM_URL;
       }
 
@@ -871,12 +897,22 @@
     }
   });
 
-  function showSuccess() {
+  function showSuccess(firstName) {
     const now = new Date();
     let h = now.getHours(), m = now.getMinutes();
     const ampm = h >= 12 ? 'PM' : 'AM';
     h = h % 12 || 12;
     sessionTime.textContent = h + ':' + (m < 10 ? '0' + m : m) + ' ' + ampm;
+
+    // Personalise the greeting if we have a name
+    const titleEl = document.getElementById('successTitle');
+    if (firstName) {
+      const cleanName = firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
+      titleEl.textContent = `Thanks, ${cleanName}!`;
+    } else {
+      titleEl.textContent = "You're checked in";
+    }
+
     formView.style.display = 'none';
     successView.style.display = 'flex';
     successView.style.opacity = '0';
