@@ -146,52 +146,37 @@
     animation: fadeUp 0.5s 0.25s both;
   }
 
-  /* ── Info cards ── */
-  .cards {
-    display: flex;
-    gap: 12px;
-    width: 100%;
-    max-width: 520px;
-    animation: fadeUp 0.5s 0.32s both;
+  .subline strong {
+    color: var(--sage-teal);
+    font-weight: 500;
   }
 
-  .card {
-    flex: 1;
-    background: rgba(149,196,191,0.08);
-    border: 1px solid rgba(149,196,191,0.18);
-    border-radius: 16px;
-    padding: 20px 18px;
+  /* ── Pointer to KioskBuddy "Tap to Pay" button ── */
+  .pointer-wrap {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
+    animation: fadeUp 0.5s 0.32s both;
+    margin-top: 8px;
   }
 
-  .card-icon {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background: rgba(149,196,191,0.12);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 4px;
+  .pointer-arrow {
+    width: 56px;
+    height: 84px;
+    animation: bounce 1.5s ease-in-out infinite;
   }
 
-  .card-label {
-    font-size: 10px;
-    font-weight: 500;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    color: rgba(149,196,191,0.7);
+  .pointer-label {
+    font-family: 'DM Serif Display', serif;
+    font-size: 24px;
+    color: var(--sage-teal);
+    margin-top: 14px;
+    letter-spacing: -0.2px;
   }
 
-  .card-value {
-    font-size: 15px;
-    font-weight: 400;
-    color: var(--white);
-    text-align: center;
-    line-height: 1.3;
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(12px); }
   }
 
   /* ── Footer note ── */
@@ -223,15 +208,6 @@
   <div class="ring ring-4"></div>
   <div class="ring ring-5"></div>
 
-  <div class="brand">
-    <svg class="brand-icon" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="16" cy="16" r="15" stroke="#95C4BF" stroke-width="1"/>
-      <path d="M16 6C16 6 10 11 10 17C10 20.314 12.686 23 16 23C19.314 23 22 20.314 22 17C22 11 16 6 16 6Z" fill="rgba(149,196,191,0.2)" stroke="#95C4BF" stroke-width="1" stroke-linejoin="round"/>
-      <path d="M16 12C16 12 13 15 13 17.5C13 19.433 14.343 21 16 21C17.657 21 19 19.433 19 17.5C19 15 16 12 16 12Z" fill="rgba(149,196,191,0.45)" stroke="#95C4BF" stroke-width="0.75" stroke-linejoin="round"/>
-    </svg>
-    <span class="brand-name">Tribe Sauna + Ice</span>
-  </div>
-
   <div class="content">
     <div class="check-wrap">
       <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#95C4BF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -244,31 +220,17 @@
     <h1 class="headline" id="headline">Enjoy your<br><em>session.</em></h1>
 
     <p class="subline">
-      Head through when you're ready. Towels and lockers are available inside.
+      To finalise your check-in, please tap the<br>
+      <strong>Tap to Pay</strong> button below.
     </p>
 
-    <div class="cards">
-      <div class="card">
-        <div class="card-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#95C4BF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C12 2 7 7.5 7 12.5a5 5 0 0010 0C17 7.5 12 2 12 2z"/></svg>
-        </div>
-        <span class="card-label">Sauna</span>
-        <span class="card-value">85°C<br>Finnish</span>
-      </div>
-      <div class="card">
-        <div class="card-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#95C4BF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
-        </div>
-        <span class="card-label">Ice Bath</span>
-        <span class="card-value">4°C<br>Cold plunge</span>
-      </div>
-      <div class="card">
-        <div class="card-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#95C4BF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        </div>
-        <span class="card-label">Session</span>
-        <span class="card-value">60 min<br>timed</span>
-      </div>
+    <div class="pointer-wrap">
+      <div class="pointer-line"></div>
+      <svg class="pointer-arrow" viewBox="0 0 64 96" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M32 8 L32 80" stroke="#95C4BF" stroke-width="2" stroke-linecap="round"/>
+        <path d="M16 64 L32 80 L48 64" stroke="#95C4BF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      </svg>
+      <div class="pointer-label">Tap to Pay</div>
     </div>
   </div>
 
@@ -324,248 +286,6 @@
     } catch (e) { /* ignore */ }
   })();
 </script>
-
-</body>
-</html>
-  /* ── Decorative rings ── */
-  .ring {
-    position: absolute;
-    border-radius: 50%;
-    pointer-events: none;
-    border: 1px solid rgba(149,196,191,0.1);
-  }
-  .ring-1 { width: 500px; height: 500px; top: -180px; right: -160px; }
-  .ring-2 { width: 340px; height: 340px; top: -100px; right: -80px;  border-color: rgba(149,196,191,0.15); }
-  .ring-3 { width: 180px; height: 180px; top: -20px;  right: 0px;    border-color: rgba(149,196,191,0.2); }
-  .ring-4 { width: 320px; height: 320px; bottom: -100px; left: -100px; }
-  .ring-5 { width: 180px; height: 180px; bottom: -50px;  left: -50px;  border-color: rgba(149,196,191,0.15); }
-
-  /* ── Brand bar ── */
-  .brand {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 52px 56px 0;
-    position: relative;
-    z-index: 2;
-  }
-
-  .brand-icon { width: 28px; height: 28px; }
-
-  .brand-name {
-    font-weight: 300;
-    font-size: 13px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--sage-teal);
-  }
-
-  /* ── Main content ── */
-  .content {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 0 56px;
-    position: relative;
-    z-index: 2;
-    text-align: center;
-  }
-
-  .check-wrap {
-    width: 88px;
-    height: 88px;
-    border-radius: 50%;
-    background: rgba(149,196,191,0.15);
-    border: 1.5px solid rgba(149,196,191,0.3);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 36px;
-    animation: popIn 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
-  }
-
-  @keyframes popIn {
-    from { transform: scale(0.5); opacity: 0; }
-    to   { transform: scale(1);   opacity: 1; }
-  }
-
-  .eyebrow {
-    font-size: 11px;
-    font-weight: 500;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-    color: var(--sage-teal);
-    margin-bottom: 16px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    animation: fadeUp 0.5s 0.15s both;
-  }
-
-  .eyebrow::before, .eyebrow::after {
-    content: '';
-    display: block;
-    width: 24px;
-    height: 1px;
-    background: var(--sage-teal);
-    opacity: 0.5;
-  }
-
-  .headline {
-    font-family: 'DM Serif Display', serif;
-    font-size: 62px;
-    line-height: 1.04;
-    color: var(--white);
-    margin-bottom: 20px;
-    letter-spacing: -0.5px;
-    animation: fadeUp 0.5s 0.2s both;
-  }
-
-  .headline em {
-    font-style: normal;
-    color: var(--sage-teal);
-  }
-
-  .subline {
-    font-size: 16px;
-    font-weight: 300;
-    color: rgba(255,255,255,0.5);
-    line-height: 1.7;
-    max-width: 380px;
-    margin-bottom: 52px;
-    animation: fadeUp 0.5s 0.25s both;
-  }
-
-  /* ── Info cards ── */
-  .cards {
-    display: flex;
-    gap: 12px;
-    width: 100%;
-    max-width: 520px;
-    animation: fadeUp 0.5s 0.32s both;
-  }
-
-  .card {
-    flex: 1;
-    background: rgba(149,196,191,0.08);
-    border: 1px solid rgba(149,196,191,0.18);
-    border-radius: 16px;
-    padding: 20px 18px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .card-icon {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background: rgba(149,196,191,0.12);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 4px;
-  }
-
-  .card-label {
-    font-size: 10px;
-    font-weight: 500;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    color: rgba(149,196,191,0.7);
-  }
-
-  .card-value {
-    font-size: 15px;
-    font-weight: 400;
-    color: var(--white);
-    text-align: center;
-    line-height: 1.3;
-  }
-
-  /* ── Footer note ── */
-  .footer-note {
-    position: absolute;
-    bottom: 44px;
-    left: 0;
-    right: 0;
-    text-align: center;
-    font-size: 12px;
-    font-weight: 300;
-    color: rgba(255,255,255,0.25);
-    letter-spacing: 0.04em;
-    z-index: 2;
-  }
-
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(14px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-</style>
-</head>
-<body>
-
-<div class="page">
-  <div class="ring ring-1"></div>
-  <div class="ring ring-2"></div>
-  <div class="ring ring-3"></div>
-  <div class="ring ring-4"></div>
-  <div class="ring ring-5"></div>
-
-  <div class="brand">
-    <svg class="brand-icon" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="16" cy="16" r="15" stroke="#95C4BF" stroke-width="1"/>
-      <path d="M16 6C16 6 10 11 10 17C10 20.314 12.686 23 16 23C19.314 23 22 20.314 22 17C22 11 16 6 16 6Z" fill="rgba(149,196,191,0.2)" stroke="#95C4BF" stroke-width="1" stroke-linejoin="round"/>
-      <path d="M16 12C16 12 13 15 13 17.5C13 19.433 14.343 21 16 21C17.657 21 19 19.433 19 17.5C19 15 16 12 16 12Z" fill="rgba(149,196,191,0.45)" stroke="#95C4BF" stroke-width="0.75" stroke-linejoin="round"/>
-    </svg>
-    <span class="brand-name">Tribe Sauna + Ice</span>
-  </div>
-
-  <div class="content">
-    <div class="check-wrap">
-      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#95C4BF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="20 6 9 17 4 12"/>
-      </svg>
-    </div>
-
-    <div class="eyebrow">You're all set</div>
-
-    <h1 class="headline">Enjoy your<br><em>session.</em></h1>
-
-    <p class="subline">
-      Head through when you're ready. Towels and lockers are available inside.
-    </p>
-
-    <div class="cards">
-      <div class="card">
-        <div class="card-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#95C4BF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C12 2 7 7.5 7 12.5a5 5 0 0010 0C17 7.5 12 2 12 2z"/></svg>
-        </div>
-        <span class="card-label">Sauna</span>
-        <span class="card-value">85°C<br>Finnish</span>
-      </div>
-      <div class="card">
-        <div class="card-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#95C4BF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
-        </div>
-        <span class="card-label">Ice Bath</span>
-        <span class="card-value">4°C<br>Cold plunge</span>
-      </div>
-      <div class="card">
-        <div class="card-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#95C4BF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        </div>
-        <span class="card-label">Session</span>
-        <span class="card-value">60 min<br>timed</span>
-      </div>
-    </div>
-  </div>
-
-  <p class="footer-note">128A George Street, East Fremantle</p>
-</div>
 
 </body>
 </html>
