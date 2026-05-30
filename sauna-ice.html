@@ -743,7 +743,7 @@
 <script>
   // ─── CONFIG ──────────────────────────────────────────────────────────────────
   const SUPABASE_URL      = 'https://hurctwfeueytlkpdrrpm.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1cmN0d2ZldWV5dGxrcGRycnBtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1MjkzMjksImV4cCI6MjA5MzEwNTMyOX0.3sEwa9oeB-k1OQtrEu-_MMpUxvd5sCvmFOzBP_Xp52E';
+  const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
   const TALLY_FORM_URL    = 'https://forms.tribesaunaice.com.au/waiver';
   const THANK_YOU_URL     = 'https://samquinntribe.github.io/tribe-kiosk/tribe-thankyou.html';
 
@@ -905,7 +905,7 @@
         const orFilter = phoneVariants.map(p => `phone_e164.eq.${encodeURIComponent(p)}`).join(',');
 
         const clientRes = await fetch(
-          `${SUPABASE_URL}/rest/v1/clients?select=id,first_name,last_name&or=(${orFilter})&phone_e164=neq.%2B10000000000&limit=1`,
+          `${SUPABASE_URL}/rest/v1/clients?select=id,first_name,last_name&or=(${orFilter})&phone_e164=neq.%2B10000000000&is_buddy=is.false&is_spot_account=is.false&limit=1`,
           { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` } }
         );
 
