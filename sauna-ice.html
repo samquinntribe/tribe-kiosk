@@ -189,6 +189,25 @@
     margin-bottom: 12px;
   }
 
+  /* Label row: label on the left, format hint on the right.
+     The hint lives OUTSIDE the input so it can never be mistaken
+     for pre-filled digits, and stays visible while typing. */
+  .label-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+
+  .label-row .input-label { margin-bottom: 0; }
+
+  .input-hint {
+    font-size: 12px;
+    font-weight: 400;
+    color: rgba(50,89,99,0.45);
+    letter-spacing: 0.02em;
+  }
+
   /* ── Country dropdown ── */
   .country-select-wrapper {
     position: relative;
@@ -228,6 +247,10 @@
   }
 
   /* ── Phone input ── */
+  .phone-input-wrap {
+    position: relative;
+  }
+
   .phone-input {
     display: block;
     width: 100%;
@@ -246,8 +269,27 @@
     text-align: center;
   }
 
-  .phone-input::placeholder { color: rgba(50,89,99,0.2); }
-  .phone-input:focus        { border-color: var(--sage-teal); }
+  .phone-input:focus { border-color: var(--sage-teal); }
+
+  /* Blinking caret shown while the field is empty, so an untouched
+     field clearly reads as "waiting for your number" */
+  .phone-caret {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 2px;
+    height: 26px;
+    background: var(--sage-teal);
+    border-radius: 1px;
+    pointer-events: none;
+    animation: caretBlink 1.1s step-end infinite;
+  }
+
+  @keyframes caretBlink {
+    0%, 55%   { opacity: 1; }
+    56%, 100% { opacity: 0; }
+  }
 
   /* ── Keypad ── */
   .keypad {
@@ -683,15 +725,20 @@
       </div>
 
       <div class="input-group">
-        <label class="input-label">Mobile number</label>
-        <input
-          type="tel"
-          class="phone-input"
-          id="phoneInput"
-          placeholder="04__ ___ ___"
-          autocomplete="off"
-          readonly
-        >
+        <div class="label-row">
+          <label class="input-label">Mobile number</label>
+          <span class="input-hint" id="phoneHint">e.g. 0412 345 678</span>
+        </div>
+        <div class="phone-input-wrap">
+          <input
+            type="tel"
+            class="phone-input"
+            id="phoneInput"
+            autocomplete="off"
+            readonly
+          >
+          <span class="phone-caret" id="phoneCaret"></span>
+        </div>
       </div>
 
       <div class="keypad" id="keypad">
@@ -755,8 +802,11 @@
   // ─────────────────────────────────────────────────────────────────────────────
 
   // ─── Phone handling ──────────────────────────────────────────────────────────
-  // AU (+61): strict 10 digits, format 04XX XXX XXX, placeholder 04__ ___ ___
-  // All other countries: lenient 6–15 digits, generic 3-3-3-3 grouping
+  // AU (+61): strict 10 digits, format 04XX XXX XXX
+  // All other countries: lenient 6–15 digits
+  // The format hint lives OUTSIDE the field (label row, right side) so it can
+  // never be mistaken for pre-filled digits. A blinking caret marks the empty
+  // field as awaiting input.
 
   const LENIENT_MIN = 6;
   const LENIENT_MAX = 15;
@@ -781,14 +831,16 @@
   function getMin() { return countryCode === '61' ? AU_LEN : LENIENT_MIN; }
   function getMax() { return countryCode === '61' ? AU_LEN : LENIENT_MAX; }
 
-  function getPlaceholder() {
-    return countryCode === '61' ? '04__ ___ ___' : 'Enter mobile number';
+  function getHint() {
+    return countryCode === '61' ? 'e.g. 0412 345 678' : 'Without the country code';
   }
 
   let digits = '';
   let countryCode = '61';
 
   const input       = document.getElementById('phoneInput');
+  const phoneHint   = document.getElementById('phoneHint');
+  const phoneCaret  = document.getElementById('phoneCaret');
   const formView    = document.getElementById('formView');
   const successView = document.getElementById('successView');
   const sessionTime = document.getElementById('sessionTime');
@@ -801,7 +853,8 @@
   });
 
   function updateDisplay() {
-    input.placeholder = getPlaceholder();
+    phoneHint.textContent = getHint();
+    phoneCaret.style.display = digits.length ? 'none' : '';
     input.value = digits.length ? formatPhone(digits) : '';
   }
 
