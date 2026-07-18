@@ -21,6 +21,11 @@
        of the 768px page. Sits directly above the KioskBuddy "Tap to Pay"
        button. Nudge this value left/right if the button moves. */
     --tap-x: 590px;
+
+    /* Vertical sink of the glow below the page's bottom edge.
+       More negative = glow sits lower / hugs the bar tighter.
+       Back toward 0 = glow rises taller into the page. */
+    --tap-y: -70px;
   }
 
   html, body {
@@ -163,7 +168,7 @@
      from the button itself. ── */
   .tap-anchor {
     position: absolute;
-    bottom: 0;
+    bottom: var(--tap-y);
     left: var(--tap-x);
     width: 0;
     height: 0;
