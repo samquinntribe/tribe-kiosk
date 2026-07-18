@@ -314,6 +314,7 @@
     transition: background 0.12s, border-color 0.12s, transform 0.1s;
     user-select: none;
     -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
     line-height: 1;
   }
 
@@ -326,7 +327,8 @@
     margin-top: 3px;
   }
 
-  .key:active {
+  .key:active,
+  .key.key-pressed {
     background: var(--soft-mint);
     border-color: var(--sage-teal);
     transform: scale(0.95);
@@ -340,7 +342,8 @@
     justify-content: center;
   }
 
-  .key.back:active { background: #fce8e8; border-color: #f0aaaa; }
+  .key.back:active,
+  .key.back.key-pressed { background: #fce8e8; border-color: #f0aaaa; }
 
   /* ── Submit button ── */
   .submit-btn {
@@ -461,11 +464,11 @@
     <div class="temp-row">
       <div class="temp-badge">
         <div class="temp-dot"></div>
-        <span class="temp-label">Sauna · 85°C</span>
+        <span class="temp-label">Sauna : 87°C</span>
       </div>
       <div class="temp-badge">
         <div class="temp-dot" style="background:#acd8f0;"></div>
-        <span class="temp-label" style="color:#acd8f0;">Ice · 4°C</span>
+        <span class="temp-label" style="color:#acd8f0;">Ice : 4°C - 8°C</span>
       </div>
     </div>
   </div>
@@ -765,7 +768,7 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
       </button>
 
-      <p class="privacy-note">Your number is only used to locate your booking</p>
+      <p class="privacy-note">Your number is used to locate your account</p>
     </div>
 
     <!-- Success view -->
@@ -872,6 +875,32 @@
   document.getElementById('backBtn').addEventListener('click', function() {
     if (digits.length > 0) { digits = digits.slice(0,-1); updateDisplay(); }
   });
+
+  // ── Keypad press feedback (iPad) ─────────────────────────────────────────────
+  // iOS doesn't reliably fire :active on touch, and quick taps flash it too
+  // briefly to see. Drive the pressed style from pointer events instead,
+  // holding it for a minimum duration so every tap visibly responds.
+  (function() {
+    const MIN_PRESS_MS = 140;
+    document.querySelectorAll('.key').forEach(function(key) {
+      let isDown = false, downAt = 0;
+      function press() {
+        isDown = true;
+        downAt = Date.now();
+        key.classList.add('key-pressed');
+      }
+      function release() {
+        if (!isDown) return;
+        isDown = false;
+        const wait = Math.max(0, MIN_PRESS_MS - (Date.now() - downAt));
+        setTimeout(function() { key.classList.remove('key-pressed'); }, wait);
+      }
+      key.addEventListener('pointerdown', press);
+      key.addEventListener('pointerup', release);
+      key.addEventListener('pointercancel', release);
+      key.addEventListener('pointerleave', release);
+    });
+  })();
 
   function pulseInput() {
     input.style.transition = 'transform 0.08s';
