@@ -16,6 +16,11 @@
     --soft-mint: #D9E9E1;
     --white: #ffffff;
     --off-white: #f7fbf9;
+
+    /* Horizontal centre of the pulsing glow, measured from the LEFT edge
+       of the 768px page. Sits directly above the KioskBuddy "Tap to Pay"
+       button. Nudge this value left/right if the button moves. */
+    --tap-x: 590px;
   }
 
   html, body {
@@ -142,7 +147,7 @@
     color: rgba(255,255,255,0.5);
     line-height: 1.7;
     max-width: 380px;
-    margin-bottom: 52px;
+    margin-bottom: 0;
     animation: fadeUp 0.5s 0.25s both;
   }
 
@@ -151,41 +156,69 @@
     font-weight: 500;
   }
 
-  /* ── Pointer to KioskBuddy "Tap to Pay" button ── */
-  .pointer-wrap {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    animation: fadeUp 0.5s 0.32s both;
-    margin-top: 8px;
+  /* ── Pulsing glow over the KioskBuddy "Tap to Pay" button ──
+     Anchored to the bottom edge of the page, directly above the
+     button in the KioskBuddy bar below. Only the top half of the
+     glow and ripple rings is visible, so the light appears to rise
+     from the button itself. ── */
+  .tap-anchor {
+    position: absolute;
+    bottom: 0;
+    left: var(--tap-x);
+    width: 0;
+    height: 0;
+    z-index: 1;
+    pointer-events: none;
   }
 
-  .pointer-arrow {
-    width: 56px;
-    height: 84px;
-    animation: bounce 1.5s ease-in-out infinite;
+  .tap-glow {
+    position: absolute;
+    width: 460px;
+    height: 460px;
+    left: -230px;
+    top: -230px;
+    border-radius: 50%;
+    background: radial-gradient(circle,
+      rgba(217,233,225,0.45) 0%,
+      rgba(149,196,191,0.30) 32%,
+      rgba(149,196,191,0.12) 52%,
+      rgba(149,196,191,0)    70%);
+    animation: glowPulse 2.4s ease-in-out infinite;
   }
 
-  .pointer-label {
-    font-family: 'DM Serif Display', serif;
-    font-size: 24px;
-    color: var(--sage-teal);
-    margin-top: 14px;
-    letter-spacing: -0.2px;
+  @keyframes glowPulse {
+    0%, 100% { opacity: 0.55; transform: scale(0.92); }
+    50%      { opacity: 1;    transform: scale(1.08); }
   }
 
-  @keyframes bounce {
-    0%, 100% { transform: translateY(0); }
-    50%      { transform: translateY(12px); }
+  .tap-ring {
+    position: absolute;
+    width: 120px;
+    height: 120px;
+    left: -60px;
+    top: -60px;
+    border-radius: 50%;
+    border: 2px solid rgba(149,196,191,0.85);
+    opacity: 0;
+    animation: ringExpand 2.4s ease-out infinite;
+  }
+
+  /* children of .tap-anchor: 1 = glow, 2/3/4 = rings */
+  .tap-ring:nth-child(3) { animation-delay: 0.8s; }
+  .tap-ring:nth-child(4) { animation-delay: 1.6s; }
+
+  @keyframes ringExpand {
+    0%   { transform: scale(0.35); opacity: 0.9; }
+    70%  { opacity: 0.25; }
+    100% { transform: scale(2.6);  opacity: 0; }
   }
 
   /* ── Footer note ── */
   .footer-note {
     position: absolute;
     bottom: 44px;
-    left: 0;
-    right: 0;
-    text-align: center;
+    left: 56px;
+    text-align: left;
     font-size: 12px;
     font-weight: 300;
     color: rgba(255,255,255,0.25);
@@ -220,18 +253,16 @@
     <h1 class="headline" id="headline">Enjoy your<br><em>session.</em></h1>
 
     <p class="subline">
-      To finalise your check-in, please tap the<br>
-      <strong>Tap to Pay</strong> button below.
+      To finalise your check-in, tap the<br>
+      <strong>Tap to Pay</strong> button in the bottom right.
     </p>
+  </div>
 
-    <div class="pointer-wrap">
-      <div class="pointer-line"></div>
-      <svg class="pointer-arrow" viewBox="0 0 64 96" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M32 8 L32 80" stroke="#95C4BF" stroke-width="2" stroke-linecap="round"/>
-        <path d="M16 64 L32 80 L48 64" stroke="#95C4BF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-      </svg>
-      <div class="pointer-label">Tap to Pay</div>
-    </div>
+  <div class="tap-anchor">
+    <div class="tap-glow"></div>
+    <div class="tap-ring"></div>
+    <div class="tap-ring"></div>
+    <div class="tap-ring"></div>
   </div>
 
   <p class="footer-note">128A George Street, East Fremantle</p>
@@ -240,7 +271,7 @@
 <script>
   // ─── CONFIG ──────────────────────────────────────────────────────────────────
   const SUPABASE_URL      = 'https://hurctwfeueytlkpdrrpm.supabase.co';
-  const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1cmN0d2ZldWV5dGxrcGRycnBtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1MjkzMjksImV4cCI6MjA5MzEwNTMyOX0.3sEwa9oeB-k1OQtrEu-_MMpUxvd5sCvmFOzBP_Xp52E';
   // ─────────────────────────────────────────────────────────────────────────────
 
   (async function() {
