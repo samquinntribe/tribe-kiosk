@@ -168,6 +168,43 @@
     font-weight: 500;
   }
 
+  /* ── First-timer reassurance ──
+     Shown ONLY when we don't know the customer's name, which is exactly the
+     case for someone who has just completed the waiver. Instead of an
+     impersonal "Thanks!", they get told what they gained by signing up. ── */
+  .saved-note {
+    display: none;
+    align-items: flex-start;
+    gap: 13px;
+    margin-top: 30px;
+    padding: 16px 22px 16px 20px;
+    background: rgba(149,196,191,0.1);
+    border: 1px solid rgba(149,196,191,0.22);
+    border-radius: 16px;
+    max-width: 430px;
+    text-align: left;
+    animation: fadeUp 0.5s 0.3s both;
+  }
+
+  .saved-note.show { display: flex; }
+
+  .saved-note svg { flex-shrink: 0; margin-top: 2px; }
+
+  .saved-note-text {
+    font-size: 14px;
+    font-weight: 300;
+    line-height: 1.55;
+    color: rgba(255,255,255,0.6);
+  }
+
+  .saved-note-text strong {
+    display: block;
+    font-weight: 500;
+    color: var(--sage-teal);
+    margin-bottom: 3px;
+    letter-spacing: 0.01em;
+  }
+
   /* ── Pulsing glow over the KioskBuddy "Tap to Pay" button ──
      Anchored to the bottom edge of the page, directly above the
      button in the KioskBuddy bar below. Only the top half of the
@@ -274,6 +311,17 @@
       Please pay for your session, by clicking<br>
       <strong>'Next'</strong> at the bottom right of the screen.
     </p>
+
+    <div class="saved-note" id="savedNote">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#95C4BF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="5" y="11" width="14" height="10" rx="2"/>
+        <path d="M8 11V7a4 4 0 0 1 8 0v4"/>
+      </svg>
+      <div class="saved-note-text">
+        <strong>Your details are saved.</strong>
+        Next time, just enter your phone number — no waiver, no forms to fill in.
+      </div>
+    </div>
   </div>
 
   <div class="tap-anchor">
@@ -287,350 +335,77 @@
 </div>
 
 <script>
-  // ─── CONFIG ──────────────────────────────────────────────────────────────────
-  const SUPABASE_URL      = 'https://hurctwfeueytlkpdrrpm.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1cmN0d2ZldWV5dGxrcGRycnBtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1MjkzMjksImV4cCI6MjA5MzEwNTMyOX0.3sEwa9oeB-k1OQtrEu-_MMpUxvd5sCvmFOzBP_Xp52E';
+  // ─── NAME HANDOFF ────────────────────────────────────────────────────────────
+  //
+  // The name is PASSED IN explicitly. It is never inferred from "the most
+  // recent check-in", because two customers arriving back to back would then
+  // see each other's names — a returning customer checks in, a new customer
+  // finishes the Tally waiver moments later, and the lookup hands the new
+  // customer the returning customer's name.
+  //
+  // Two deterministic sources, in order:
+  //   1. ?name= on the URL  — set by the check-in page (returning) and by
+  //                           Tally's redirect-on-completion (new sign-ups)
+  //   2. localStorage       — legacy path, kept so older kiosk builds still work
+  //
+  // If neither is present the page shows the plain "Thanks!" greeting. An
+  // impersonal greeting is always better than the wrong person's name.
   // ─────────────────────────────────────────────────────────────────────────────
 
-  (async function() {
-    let firstName = '';
+  (function() {
+    // Accept only plausible first names, and cap the length. The value arrives
+    // from a URL, so it must never be trusted as markup.
+    function sanitiseName(raw) {
+      if (!raw) return '';
+      var name = String(raw).trim().replace(/[^A-Za-z\u00C0-\u024F' -]/g, '');
+      if (!name || name.length > 24) return '';
+      return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
+    }
 
-    // Step 1: try to read from localStorage (set by sauna-ice.html on returning check-ins)
+    var firstName = '';
+
+    // Source 1: ?name= on the URL
     try {
-      const storedName = localStorage.getItem('tribe_checkin_name');
-      const storedAt   = parseInt(localStorage.getItem('tribe_checkin_at') || '0', 10);
-      // Only trust the stored name if it was set in the last 60 seconds
-      if (storedName && (Date.now() - storedAt) < 60000) {
-        firstName = storedName;
-      }
-    } catch (e) { /* localStorage unavailable, fall through */ }
+      firstName = sanitiseName(new URLSearchParams(window.location.search).get('name'));
+    } catch (e) { /* older browser, fall through */ }
 
-    // Step 2: fallback — look up the most recent visit in Supabase (for post-Tally arrivals)
+    // Source 2: localStorage, only if written in the last 60 seconds
     if (!firstName) {
       try {
-        const res = await fetch(
-          `${SUPABASE_URL}/rest/v1/kiosk_visits?select=first_name&order=check_in_at.desc&limit=1`,
-          { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` } }
-        );
-        if (res.ok) {
-          const visits = await res.json();
-          if (visits.length > 0 && visits[0].first_name) {
-            firstName = visits[0].first_name;
-          }
+        var storedName = localStorage.getItem('tribe_checkin_name');
+        var storedAt   = parseInt(localStorage.getItem('tribe_checkin_at') || '0', 10);
+        if (storedName && (Date.now() - storedAt) < 60000) {
+          firstName = sanitiseName(storedName);
         }
-      } catch (e) { /* network error, just show generic message */ }
+      } catch (e) { /* localStorage unavailable */ }
     }
 
-    // Step 3: personalise the page if we have a name
+    // Personalise. Static markup + textContent, so a name can never inject HTML.
     if (firstName) {
-      const cleanName = firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
-      document.getElementById('eyebrow').textContent = `Checked-In, ${cleanName}`;
-      document.getElementById('headline').innerHTML = `Thanks<br><em>${cleanName}!</em>`;
+      document.getElementById('eyebrow').textContent = 'Checked-In, ' + firstName;
+
+      var headline = document.getElementById('headline');
+      headline.innerHTML = 'Thanks<br><em></em>';
+      headline.querySelector('em').textContent = firstName + '!';
+    } else {
+      // No name means this is almost always a first-timer arriving straight
+      // from the waiver. Tell them what they've just gained instead of
+      // greeting them anonymously.
+      document.getElementById('savedNote').classList.add('show');
     }
 
-    // Clear localStorage so the next person doesn't see this name
+    // Clear the stored name so it can never reach the next customer
     try {
       localStorage.removeItem('tribe_checkin_name');
       localStorage.removeItem('tribe_checkin_at');
     } catch (e) { /* ignore */ }
-  })();
-</script>
 
-</body>
-</html>    overflow: hidden;
-    font-family: 'DM Sans', sans-serif;
-    background: var(--deep-teal);
-  }
-
-  .page {
-    width: 768px;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    overflow: hidden;
-  }
-
-  /* ── Decorative rings ── */
-  .ring {
-    position: absolute;
-    border-radius: 50%;
-    pointer-events: none;
-    border: 1px solid rgba(149,196,191,0.1);
-  }
-  .ring-1 { width: 500px; height: 500px; top: -180px; right: -160px; }
-  .ring-2 { width: 340px; height: 340px; top: -100px; right: -80px;  border-color: rgba(149,196,191,0.15); }
-  .ring-3 { width: 180px; height: 180px; top: -20px;  right: 0px;    border-color: rgba(149,196,191,0.2); }
-  .ring-4 { width: 320px; height: 320px; bottom: -100px; left: -100px; }
-  .ring-5 { width: 180px; height: 180px; bottom: -50px;  left: -50px;  border-color: rgba(149,196,191,0.15); }
-
-  /* ── Brand bar ── */
-  .brand {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 52px 56px 0;
-    position: relative;
-    z-index: 2;
-  }
-
-  .brand-icon { width: 28px; height: 28px; }
-
-  .brand-name {
-    font-weight: 300;
-    font-size: 13px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--sage-teal);
-  }
-
-  /* ── Main content ── */
-  .content {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 0 56px;
-    position: relative;
-    z-index: 2;
-    text-align: center;
-  }
-
-  .check-wrap {
-    width: 88px;
-    height: 88px;
-    border-radius: 50%;
-    background: rgba(149,196,191,0.15);
-    border: 1.5px solid rgba(149,196,191,0.3);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 36px;
-    animation: popIn 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
-  }
-
-  @keyframes popIn {
-    from { transform: scale(0.5); opacity: 0; }
-    to   { transform: scale(1);   opacity: 1; }
-  }
-
-  .eyebrow {
-    font-size: 11px;
-    font-weight: 500;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-    color: var(--sage-teal);
-    margin-bottom: 16px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    animation: fadeUp 0.5s 0.15s both;
-  }
-
-  .eyebrow::before, .eyebrow::after {
-    content: '';
-    display: block;
-    width: 24px;
-    height: 1px;
-    background: var(--sage-teal);
-    opacity: 0.5;
-  }
-
-  .headline {
-    font-family: 'DM Serif Display', serif;
-    font-size: 62px;
-    line-height: 1.04;
-    color: var(--white);
-    margin-bottom: 20px;
-    letter-spacing: -0.5px;
-    animation: fadeUp 0.5s 0.2s both;
-  }
-
-  .headline em {
-    font-style: normal;
-    color: var(--sage-teal);
-  }
-
-  .subline {
-    font-size: 16px;
-    font-weight: 300;
-    color: rgba(255,255,255,0.5);
-    line-height: 1.7;
-    max-width: 380px;
-    margin-bottom: 0;
-    animation: fadeUp 0.5s 0.25s both;
-  }
-
-  .subline strong {
-    color: var(--sage-teal);
-    font-weight: 500;
-  }
-
-  /* ── Pulsing glow over the KioskBuddy "Tap to Pay" button ──
-     Anchored to the bottom edge of the page, directly above the
-     button in the KioskBuddy bar below. Only the top half of the
-     glow and ripple rings is visible, so the light appears to rise
-     from the button itself. ── */
-  .tap-anchor {
-    position: absolute;
-    bottom: var(--tap-y);
-    left: var(--tap-x);
-    width: 0;
-    height: 0;
-    z-index: 1;
-    pointer-events: none;
-  }
-
-  /* Wide, squat pool of light hugging the bottom edge — brightest at
-     the very bottom row of the page, fading quickly as it rises, so it
-     reads as light spilling UP from the button below rather than a
-     dome floating above it. */
-  .tap-glow {
-    position: absolute;
-    width: 540px;
-    height: 260px;
-    left: -270px;
-    top: -130px;
-    border-radius: 50%;
-    background: radial-gradient(ellipse at center,
-      rgba(217,233,225,0.70) 0%,
-      rgba(149,196,191,0.45) 28%,
-      rgba(149,196,191,0.18) 54%,
-      rgba(149,196,191,0)    72%);
-    animation: glowPulse 2.4s ease-in-out infinite;
-  }
-
-  @keyframes glowPulse {
-    0%, 100% { opacity: 0.6; transform: scale(0.94); }
-    50%      { opacity: 1;   transform: scale(1.06); }
-  }
-
-  /* Ripple rings kept small so their visible arcs stay low,
-     peaking ~100px above the edge instead of 150px+ */
-  .tap-ring {
-    position: absolute;
-    width: 90px;
-    height: 90px;
-    left: -45px;
-    top: -45px;
-    border-radius: 50%;
-    border: 2px solid rgba(149,196,191,0.9);
-    opacity: 0;
-    animation: ringExpand 2.4s ease-out infinite;
-  }
-
-  /* children of .tap-anchor: 1 = glow, 2/3/4 = rings */
-  .tap-ring:nth-child(3) { animation-delay: 0.8s; }
-  .tap-ring:nth-child(4) { animation-delay: 1.6s; }
-
-  @keyframes ringExpand {
-    0%   { transform: scale(0.4); opacity: 0.95; }
-    70%  { opacity: 0.3; }
-    100% { transform: scale(2.2); opacity: 0; }
-  }
-
-  /* ── Footer note ── */
-  .footer-note {
-    position: absolute;
-    bottom: 44px;
-    left: 56px;
-    text-align: left;
-    font-size: 12px;
-    font-weight: 300;
-    color: rgba(255,255,255,0.25);
-    letter-spacing: 0.04em;
-    z-index: 2;
-  }
-
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(14px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-</style>
-</head>
-<body>
-
-<div class="page">
-  <div class="ring ring-1"></div>
-  <div class="ring ring-2"></div>
-  <div class="ring ring-3"></div>
-  <div class="ring ring-4"></div>
-  <div class="ring ring-5"></div>
-
-  <div class="content">
-    <div class="check-wrap">
-      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#95C4BF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="20 6 9 17 4 12"/>
-      </svg>
-    </div>
-
-    <div class="eyebrow" id="eyebrow">Checked-In</div>
-
-    <h1 class="headline" id="headline">Thanks<em>!</em></h1>
-
-    <p class="subline">
-      Please pay for your session, by clicking<br>
-      <strong>'Next'</strong> at the bottom right of the screen.
-    </p>
-  </div>
-
-  <div class="tap-anchor">
-    <div class="tap-glow"></div>
-    <div class="tap-ring"></div>
-    <div class="tap-ring"></div>
-    <div class="tap-ring"></div>
-  </div>
-
-  <p class="footer-note">128A George Street, East Fremantle</p>
-</div>
-
-<script>
-  // ─── CONFIG ──────────────────────────────────────────────────────────────────
-  const SUPABASE_URL      = 'https://hurctwfeueytlkpdrrpm.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1cmN0d2ZldWV5dGxrcGRycnBtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1MjkzMjksImV4cCI6MjA5MzEwNTMyOX0.3sEwa9oeB-k1OQtrEu-_MMpUxvd5sCvmFOzBP_Xp52E';
-  // ─────────────────────────────────────────────────────────────────────────────
-
-  (async function() {
-    let firstName = '';
-
-    // Step 1: try to read from localStorage (set by sauna-ice.html on returning check-ins)
+    // Strip the name from the address bar so a refresh, or the next person
+    // landing on a stale tab, doesn't re-display it.
     try {
-      const storedName = localStorage.getItem('tribe_checkin_name');
-      const storedAt   = parseInt(localStorage.getItem('tribe_checkin_at') || '0', 10);
-      // Only trust the stored name if it was set in the last 60 seconds
-      if (storedName && (Date.now() - storedAt) < 60000) {
-        firstName = storedName;
+      if (window.history && window.history.replaceState && window.location.search) {
+        window.history.replaceState({}, document.title, window.location.pathname);
       }
-    } catch (e) { /* localStorage unavailable, fall through */ }
-
-    // Step 2: fallback — look up the most recent visit in Supabase (for post-Tally arrivals)
-    if (!firstName) {
-      try {
-        const res = await fetch(
-          `${SUPABASE_URL}/rest/v1/kiosk_visits?select=first_name&order=check_in_at.desc&limit=1`,
-          { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` } }
-        );
-        if (res.ok) {
-          const visits = await res.json();
-          if (visits.length > 0 && visits[0].first_name) {
-            firstName = visits[0].first_name;
-          }
-        }
-      } catch (e) { /* network error, just show generic message */ }
-    }
-
-    // Step 3: personalise the page if we have a name
-    if (firstName) {
-      const cleanName = firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
-      document.getElementById('eyebrow').textContent = `Checked-In, ${cleanName}`;
-      document.getElementById('headline').innerHTML = `Thanks<br><em>${cleanName}!</em>`;
-    }
-
-    // Clear localStorage so the next person doesn't see this name
-    try {
-      localStorage.removeItem('tribe_checkin_name');
-      localStorage.removeItem('tribe_checkin_at');
     } catch (e) { /* ignore */ }
   })();
 </script>
