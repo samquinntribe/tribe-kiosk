@@ -935,26 +935,33 @@
     setLoading(true);
 
     try {
-      // First, look up if this phone has an existing profile + get the name
-      const lookupRes = await fetch(
-        `${SUPABASE_URL}/rest/v1/kiosk_profiles?select=id,first_name,last_name&phone_e164=eq.${encodeURIComponent(phone)}&limit=1`,
-        { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` } }
-      );
+      // Look up the phone via the locked-down kiosk_lookup function.
+      // It returns only a first name + where it was found; no table access needed.
+      const lookupRes = await fetch(`${SUPABASE_URL}/rest/v1/rpc/kiosk_lookup`, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ p_phone: phone, p_check_hapana: CHECK_HAPANA_CLIENTS })
+      });
       if (!lookupRes.ok) throw new Error('lookup failed');
-      const profiles = await lookupRes.json();
+      const matches = await lookupRes.json();
+      const match = matches.length > 0 ? matches[0] : null;
 
-      if (profiles.length > 0) {
-        // ── Returning customer ── call checkin RPC to log visit + bump count
-        const profile = profiles[0];
-        const firstName = profile.first_name || '';
+      if (match) {
+        // ── Known customer (kiosk profile, or Hapana client) ──
+        const firstName = match.first_name || '';
 
-        // Save name to localStorage so thank-you page can personalise greeting
+        // Save name so the thank-you page can personalise its greeting
         try {
           localStorage.setItem('tribe_checkin_name', firstName);
           localStorage.setItem('tribe_checkin_at', Date.now().toString());
         } catch (e) { /* ignore */ }
 
-        // Call checkin RPC — handles visit insertion + visit_count bump atomically
+        // Log the visit. For a Hapana match, p_check_hapana makes checkin
+        // create the kiosk_profile, exactly as before.
         fetch(`${SUPABASE_URL}/rest/v1/rpc/checkin`, {
           method: 'POST',
           headers: {
@@ -963,73 +970,18 @@
             'Content-Type': 'application/json',
             'Prefer': 'return=minimal'
           },
-          body: JSON.stringify({
-            p_phone: phone,
-            p_first_name: profile.first_name,
-            p_last_name: profile.last_name
-          })
+          body: JSON.stringify(
+            match.source === 'hapana'
+              ? { p_phone: phone, p_check_hapana: true }
+              : { p_phone: phone }
+          )
         }).catch(err => console.error('Check-in RPC failed:', err));
 
         showSuccess(firstName);
         setTimeout(() => { window.location.href = THANK_YOU_URL; }, 1800);
 
-      } else if (CHECK_HAPANA_CLIENTS) {
-        // ── Flag is on ── check if this phone matches a Hapana client
-        // The RPC handles the auto-creation server-side, but we still need the
-        // name client-side to personalise the success screen + thank-you page.
-
-        // Build the phone variants we need to check (Hapana stores some with leading 0)
-        const phoneVariants = [
-          phone,
-          '+610' + phone.substring(3),    // +61XXX → +610XXX
-          phone.substring(1)              // strip +
-        ];
-        const orFilter = phoneVariants.map(p => `phone_e164.eq.${encodeURIComponent(p)}`).join(',');
-
-        const clientRes = await fetch(
-          `${SUPABASE_URL}/rest/v1/clients?select=id,first_name,last_name&or=(${orFilter})&phone_e164=neq.%2B10000000000&is_buddy=is.false&is_spot_account=is.false&limit=1`,
-          { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` } }
-        );
-
-        if (clientRes.ok) {
-          const matchedClients = await clientRes.json();
-          if (matchedClients.length > 0) {
-            // Hapana client found — recognise them, RPC will auto-create the kiosk_profile
-            const client = matchedClients[0];
-            const firstName = client.first_name || '';
-
-            try {
-              localStorage.setItem('tribe_checkin_name', firstName);
-              localStorage.setItem('tribe_checkin_at', Date.now().toString());
-            } catch (e) { /* ignore */ }
-
-            // Call checkin RPC with p_check_hapana=true so it creates the kiosk_profile
-            fetch(`${SUPABASE_URL}/rest/v1/rpc/checkin`, {
-              method: 'POST',
-              headers: {
-                'apikey': SUPABASE_ANON_KEY,
-                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-                'Content-Type': 'application/json',
-                'Prefer': 'return=minimal'
-              },
-              body: JSON.stringify({
-                p_phone: phone,
-                p_check_hapana: true
-              })
-            }).catch(err => console.error('Hapana check-in RPC failed:', err));
-
-            showSuccess(firstName);
-            setTimeout(() => { window.location.href = THANK_YOU_URL; }, 1800);
-            return;
-          }
-        }
-
-        // No Hapana match either → Tally
-        showRedirecting();
-        setTimeout(() => { window.location.href = TALLY_FORM_URL; }, 400);
-
       } else {
-        // ── New customer (Hapana check disabled) ── send to Tally
+        // ── New customer ── send to Tally waiver
         showRedirecting();
         setTimeout(() => { window.location.href = TALLY_FORM_URL; }, 400);
       }
